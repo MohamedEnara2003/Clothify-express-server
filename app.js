@@ -20,15 +20,13 @@ const app = express();
 
 
 const mongoose = require('mongoose');
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 const connectToDB =  async () => {
   try {
     await mongoose.connect(process.env.MONGO_URL);
     console.log('Connected to MongoDB Atlas');
-    app.listen(port , () => {
-    console.log(`Server is running on port ${port}`);
-    });
+    app.listen(PORT , () => console.log(`Server is running on port ${PORT}`));
     } catch (error) {
     console.error('Failed to connect to MongoDB Atlas:', error);
     }
@@ -53,7 +51,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Routes
-
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
