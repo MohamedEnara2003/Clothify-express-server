@@ -1,16 +1,21 @@
-const usersSchema = require('../models/users.Schema')
-const validationResult = require('../middlewares/validationResult')
+const usersSchema = require('../models/users.Schema');
+const rolesSchema = require('../models/roles.Schema');
 const jwt = require('../utils/jwt');
 const hash  =  require('../utils/hash');
 
 
-
-
 exports.getAllUsers= async (req , res , next) => {
     try {
-    const users = await usersSchema.find();
 
-    if(!users.length === 0) res.status(404).json({message: "Not user found"});
+    const page = parseInt(req.query.page) || 1;
+    const limit =  parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const users = await usersSchema.find().skip(skip).limit(limit);
+
+    if(!users.length === 0) return res.status(404).json({message: "Not user found"});
+
+    total = await usersSchema.countDocuments();
 
     const allUsers = users.map((user) => {
     return {
@@ -24,8 +29,8 @@ exports.getAllUsers= async (req , res , next) => {
     })
 
     res.status(200).json({  
-        message: "Fetched successfully",
-        users : allUsers
+    data : {users : allUsers ,currentPage : +page , totalPages: Math.ceil(total / limit) , total},
+    message: "Fetched successfully",
     });
     }catch (err) {
     next(err);
@@ -34,9 +39,12 @@ exports.getAllUsers= async (req , res , next) => {
 
 exports.getUserProfile= async (req , res , next) => {
     try {
-    const user = await usersSchema.findById(req.user.id);
+    
+    const user = await usersSchema.findById({_id: req.user.id}, '-password -refreshToken -ip');
 
-    if(!user) res.status(404).json({message: "Not user found"});
+    if(!user) {
+    return res.status(200).json({message: "User not found"});
+    }
 
     const userData =  {id: user.id, fullName: user.fullName, email: user.email, role: user.role};
 
@@ -52,26 +60,42 @@ exports.getUserProfile= async (req , res , next) => {
 
 exports.register = async (req , res , next) => {
   try {
-    const errors = validationResult(req);
-    if (errors) throw errors;
+    const ipAddress = req.ip  || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const {fullName , email, password} = req.body;
 
-    const ipAddress = req.headers['x-forwarded-for'] || req.ip || req.socket.remoteAddress;
-
-    const { fullName, email, password } = req.body;
-
+    if (!fullName || !email || !password) {
+    return res.status(400).json({message: "All fields are required"});
+    }
+ 
     // hash password & ip
     const hashedPassword = await hash.hashPassword(password);
     const hashedIpAddress = await hash.hashIpAddress(ipAddress);
 
-    const isAdmin = password === process.env.ADMIN_PASSWORD;
 
+    let userRole = "User";
+
+    const isSuperAdmin = password === process.env.SUPER_ADMIN_PASSWORD;
+    if (isSuperAdmin) {
+      userRole = "SuperAdmin";
+    } else {
+      const existingRole = await rolesSchema.findOne({email});
+      if (existingRole) {
+        const isMatch = await hash.comparePassword(password, existingRole.password);
+        if (!isMatch) {
+          return res.status(401).json({ message: "Password is incorrect for assigned role" });
+        }
+        await rolesSchema.findByIdAndDelete({_id : existingRole._id})
+        userRole = existingRole.role;
+      }
+    }
     const user = new usersSchema({
     fullName,
     email,
     password: hashedPassword,
     ip: hashedIpAddress,
-    role: isAdmin ? 'Admin' : 'User',
+    role: userRole,
     });
+
 
     const userData = {
     id: user._id,
@@ -84,7 +108,6 @@ exports.register = async (req , res , next) => {
     const accessToken = jwt.createAccessToken(userData);
     const refreshToken = jwt.createRefreshToken(userData);
 
-    
     user.refreshToken = refreshToken;
     await user.save();
 
@@ -103,37 +126,28 @@ exports.register = async (req , res , next) => {
     });
 
     res.status(201).json({
-      message: 'User registered successfully',
-      token: accessToken,
-      user: userData,
+    message: 'User registered successfully',
+    token: accessToken,
+    user: userData,
     });
   } catch (err) {
-    console.log(err);
     next(err);
   }
 }
 
 exports.login = async(req , res , next) => {
     try{
-    
-    const errors = validationResult(req);
-    if(errors) throw errors;
-
+  
     const {email , password} = req.body;
     const user = await usersSchema.findOne({email});
     
-    if(!user){
-    return res.status(404).json({ message: "Invalid Email"});
-    }
-
+    if(!user) res.status(404).json({ message: "Invalid Email"});
+  
     const isMatch = await hash.comparePassword(password , user.password);
 
-    if(!isMatch){
-    return res.status(401).json({ message: "Invalid password"});
-    }
-
+    if(!isMatch) res.status(401).json({ message: "Invalid password"});
+    
     const userData =  {id: user.id, fullName: user.fullName, email: user.email, role: user.role , ip: user.ip};
-
     const accessToken =  await jwt.createAccessToken(userData);
     const refreshToken = await jwt.createRefreshToken(userData);
 
@@ -174,9 +188,6 @@ exports.logout = async(req , res , next) => {
     user.refreshToken = null;
     await user.save();
 
-  res.clearCookie('token');
-  res.clearCookie('refreshToken');
-
   res.status(200).json({message: "User logged out successfully"});
   }catch(err){
     console.log(err);
@@ -186,14 +197,25 @@ exports.logout = async(req , res , next) => {
 
 exports.deleteUser = async (req, res, next) => {
   try {
-  const {userId} = req.params;
+  const userIds = req.body;
 
-  const user = await usersSchema.findById(userId);
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    return res.status(400).json({ message: "Users IDs are required" });
+  }
+
+  const users = await usersSchema.find({ _id: { $in: userIds } }, 'role');
   
-  if (!user)  res.status(404).json({ message: "User not found" });
-  if (user.role === 'Admin')  res.status(403).json({ message: "Cannot delete an admin user" });
+  if (users.length === 0)  {
+  return res.status(400).json({ message: "User not found" });
+  }
+
+  const isSuperAdmin = users.some(({role}) => role === req.user.role)
   
-  await usersSchema.findByIdAndDelete(userId);
+  if (isSuperAdmin)  {
+  return res.status(400).json({ message: "A Super Admin is not allowed to delete another Super Admin." });
+  }
+  
+  await usersSchema.deleteMany({ _id: { $in: userIds } });
   res.status(200).json({message: "User deleted successfully" });
   }
   catch (err) {

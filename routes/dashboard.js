@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const isAuth = require('../middlewares/auth')
-const isAdmin = require('../middlewares/isAdmin')
+const {isFullyAuthorized} = require('../middlewares/roles.middelware')
 
-router.get('/' , isAuth , isAdmin ,  (req ,res ,next) => {
+
+// Routes
+router.get('/' , isAuth , isFullyAuthorized ,  (req ,res ,next) => {
 res.status(200).json({message : "Wellcome admin dashboard!"})
 })
 

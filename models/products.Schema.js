@@ -38,20 +38,26 @@ const Schema = new mongoose.Schema({
         required: true,
     },
     
-    type: {
-        type: String,
-        required: true,
-    },
-    
+  
     category: {
         type: String,
         enum: ['APPAREL', 'ACCESSORIES', 'SHOES', 'OUTERWEAR', 'TROUSERS'],
         required: true,
     },
+
+    type: {
+    type: String,
+    required: true,
+    },
+    
+    fitType	: {
+    type: String,
+    required: true,
+    },
     
       gender: {
         type: String,
-        enum: ['MEN', 'WOMEN', 'KIDS'],
+        enum: ['MEN', 'WOMEN', 'KIDS' , 'NONE'],
         required: true,
       },
 
@@ -63,7 +69,9 @@ const Schema = new mongoose.Schema({
         stock: {type: Number},
         }
     ],
+
     stock : {type: Number, default: null},  
+    
     tags: [
         {
         type: String,

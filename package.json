@@ -4,6 +4,7 @@
   "main": "app.js",
   "private": true,
   "scripts": {
+    "dev": "nodemon app.js",
     "start": "node app.js"
   },
   "dependencies": {
@@ -21,8 +22,8 @@
     "morgan": "~1.9.1",
     "multer": "^2.0.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.5",
     "nodemon": "^3.1.10",
-    "sharp": "^0.34.2",
-    "stripe": "^18.3.0"
+    "sharp": "^0.34.2"
   }
 }
