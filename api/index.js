@@ -1,5 +1,7 @@
 const app = require('../app');
+const connectToDatabase = require('../utils/db');
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
+  await connectToDatabase();
   app(req, res);
 };

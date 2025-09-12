@@ -5,7 +5,7 @@ require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const mongoose = require('mongoose');
+
 
 // Routes Required
 const usersRouter = require('./routes/users');
@@ -18,15 +18,6 @@ const uploadImageRouter = require('./routes/upload_image');
 const visitorsRouter = require('./routes/visitors');
 const collectionsRouter = require('./routes/collection');
 
-// MongoDB Connection (Atlas)
-(async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log('✅ Connected to MongoDB Atlas');
-  } catch (error) {
-    console.error('❌ Failed to connect to MongoDB Atlas:', error);
-  }
-})();
 
 // Proxy to Real Ip Address
 app.set('trust proxy', true);
