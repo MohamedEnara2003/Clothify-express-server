@@ -5,11 +5,11 @@ const hash  =  require('../utils/hash');
 
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', 
-  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // <-- lowercase
 };
 
-exports.getAllUsers = async (req, res, next) => {
+exports.getAllUsers = async (req, res, next) => {``
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
@@ -117,7 +117,7 @@ exports.login = async (req, res, next) => {
 
     user.refreshToken = refreshToken;
     await user.save();
-    
+
     res.cookie('token', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
     res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
 

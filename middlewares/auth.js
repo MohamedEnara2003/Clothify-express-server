@@ -5,7 +5,7 @@ const usersSchema = require('../models/users.Schema');
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // <-- lowercase
 };
 
 const isAuth = async (req, res, next) => {
