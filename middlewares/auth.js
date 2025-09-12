@@ -2,14 +2,15 @@ const jwt = require('../utils/jwt');
 const { compareIP } = require('../utils/hash');
 const usersSchema = require('../models/users.Schema');
 
+const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // <-- lowercase
+httpOnly: true,
+secure: isProduction, 
+sameSite: isProduction ? 'None' : 'Lax',
 };
 
 const isAuth = async (req, res, next) => {
-  try {
+try {
     const token = req.cookies.token;
     const refreshToken = req.cookies.refreshToken;
     const userIP = req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress;
