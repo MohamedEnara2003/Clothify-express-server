@@ -1,12 +1,11 @@
-
 const express = require('express');
 const app = express();
 
 require('dotenv').config();
 const cors = require('cors');
-
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const mongoose = require('mongoose');
 
 // Routes Required
 const usersRouter = require('./routes/users');
@@ -19,22 +18,15 @@ const uploadImageRouter = require('./routes/upload_image');
 const visitorsRouter = require('./routes/visitors');
 const collectionsRouter = require('./routes/collection');
 
-
-
-const mongoose = require('mongoose');
-const PORT = process.env.PORT || 8000;
-
-// Connect To MongooDB
-const connectToDB =  async () => {
+// MongoDB Connection (Atlas)
+(async () => {
   try {
     await mongoose.connect(process.env.MONGO_URL);
-    console.log('Connected to MongoDB Atlas');
-    app.listen(PORT , () => console.log(`Server is running on port ${PORT}`));
-    } catch (error) {
-    console.error('Failed to connect to MongoDB Atlas:', error);
-    }
-}
-connectToDB();
+    console.log('✅ Connected to MongoDB Atlas');
+  } catch (error) {
+    console.error('❌ Failed to connect to MongoDB Atlas:', error);
+  }
+})();
 
 // Proxy to Real Ip Address
 app.set('trust proxy', true);
@@ -48,9 +40,9 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true); // السماح
+      callback(null, true); // allow
     } else {
-      callback(new Error('Not allowed by CORS')); // رفض
+      callback(new Error('Not allowed by CORS')); // deny
     }
   },
   credentials: true
@@ -67,14 +59,11 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // Body Parser Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
-
 
 // Routes
 app.get('/health', (req, res) => {
@@ -83,26 +72,25 @@ app.get('/health', (req, res) => {
 
 app.use(usersRouter);
 app.use('/roles', rolesRouter);
-app.use('/products',productsRouter);
-app.use('/collections',collectionsRouter);
-app.use('/carts',cartsRouter);
-app.use('/orders',orderRouter);
-app.use('/dashboard',dashboardRouter);
-app.use('/visitors',visitorsRouter);
+app.use('/products', productsRouter);
+app.use('/collections', collectionsRouter);
+app.use('/carts', cartsRouter);
+app.use('/orders', orderRouter);
+app.use('/dashboard', dashboardRouter);
+app.use('/visitors', visitorsRouter);
 app.use(uploadImageRouter);
 
-
 // Not Found MW
-app.use((req, res, next) =>{
-  res.status(404).json('No Found')
+app.use((req, res, next) => {
+  res.status(404).json('Not Found');
 });
 
-
 // Error MW
-app.use((error , req , res , next) => {
+app.use((error, req, res, next) => {
   const status = error.status || 500;
-  res.status(status).json({Error : error});
-})
+  res.status(status).json({ Error: error.message || error });
+});
 
-
+// ⚠️ مهم: متعملش app.listen()
+// في Vercel انت محتاج تصدر app بس
 module.exports = app;
