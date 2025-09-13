@@ -5,13 +5,13 @@ const hash  =  require('../utils/hash');
 
 
 const isProduction = process.env.NODE_ENV === 'production';
+
 const cookieOptions = {
   httpOnly: true,
   secure: isProduction,      
-  sameSite: 'Lax',             
+  sameSite: isProduction ?  'None'  : 'Lax',             
   path: '/',                 
 };
-
 
 exports.getAllUsers = async (req, res, next) => {
   try {
