@@ -82,6 +82,5 @@ app.use((error, req, res, next) => {
   res.status(status).json({ Error: error.message || error });
 });
 
-// ⚠️ مهم: متعملش app.listen()
-// في Vercel انت محتاج تصدر app بس
+
 module.exports = app;

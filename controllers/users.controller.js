@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
   secure: true, 
-  sameSite: isProduction ? 'none' : 'strict',
+  sameSite: isProduction ? 'None' : 'Lax',
 };
 
 exports.getAllUsers = async (req, res, next) => {
@@ -137,11 +137,16 @@ exports.logout = async (req, res, next) => {
     user.refreshToken = null;
     await user.save();
 
+    // مسح الكوكيز
+    res.clearCookie('token', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+
     res.status(200).json({ message: "User logged out successfully" });
   } catch (err) {
     next(err);
   }
 };
+
 
 exports.deleteUser = async (req, res, next) => {
   try {
