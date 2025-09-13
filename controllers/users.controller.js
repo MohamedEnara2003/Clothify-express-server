@@ -7,9 +7,11 @@ const hash  =  require('../utils/hash');
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
-  secure: true, 
-  sameSite: isProduction ? 'None' : 'Lax',
+  secure: isProduction,      
+  sameSite: 'Lax',             
+  path: '/',                 
 };
+
 
 exports.getAllUsers = async (req, res, next) => {
   try {
@@ -125,6 +127,7 @@ exports.login = async (req, res, next) => {
 
     res.status(200).json({ message: "User logged in successfully", token: accessToken, user: userData });
   } catch (err) {
+    res.status(200).json({error : err})
     next(err);
   }
 };
