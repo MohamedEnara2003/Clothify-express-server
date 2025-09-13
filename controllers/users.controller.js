@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
   secure: true, 
-  sameSite: isProduction ? 'None' : 'Lax',
+  sameSite: 'None',
 };
 
 exports.getAllUsers = async (req, res, next) => {

@@ -5,9 +5,10 @@ const usersSchema = require('../models/users.Schema');
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? 'None' : 'Lax',
+  secure: true, 
+  sameSite: 'None',
 };
+
 
 const isAuth = async (req, res, next) => {
   try {
