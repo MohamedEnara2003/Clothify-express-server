@@ -213,34 +213,26 @@ exports.createProduct = async (req, res, next) => {
 };
 
 
-exports.updateProduct = async ( req , res , next) => {
-    try {
-
-    const {productId} = req.params;
+exports.updateProduct = async (req, res, next) => {
+  try {
+    const { productId } = req.params;
     const { sizes, ...rest } = req.body;
-    const updatedProduct = await  productsSchema.findByIdAndUpdate(productId , rest , {new : true})
 
-      if (Array.isArray(sizes)) {
-      for (let size of sizes) {
-      if (!size._id) continue;
-          await productsSchema.updateOne(
-          { _id: productId, "sizes._id": size._id },
-          {
-            $set: {
-            "sizes.$.size": size.size,
-            "sizes.$.stock": size.stock,
-            }
-          }
-        );
-      }
-      }
+    const updatedProduct = await productsSchema.findByIdAndUpdate(
+      productId,
+      {
+      ...rest,
+      ...(Array.isArray(sizes) ? { sizes } : {})
+      },
+      { new: true }
+    );
 
-    res.status(200).json({data : updatedProduct , message : 'Updated successfully'})
-    }
-    catch(err) {
-    next(err)
-    }
-}
+    res.status(200).json({ data: updatedProduct, message: "Updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 exports.deleteProduct = async (req, res, next) => {
   try {
