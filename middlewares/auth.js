@@ -16,10 +16,10 @@ const isAuth = async (req, res, next) => {
     const token = req.cookies.token;
     const refreshToken = req.cookies.refreshToken;
     const userIP = req.headers['x-forwarded-for'] || req.ip || req.socket?.remoteAddress;
-
+    
     // مفيش أي توكن → unauthorized
     if (!token && !refreshToken) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
+      return res.status(401).json({data : {token , refreshToken} , message: "Unauthorized: No token provided" });
     }
 
     // Access token صالح
