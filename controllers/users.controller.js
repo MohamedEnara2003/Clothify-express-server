@@ -7,10 +7,11 @@ const hash  =  require('../utils/hash');
 const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
-  secure: true, 
-  sameSite: isProduction ? 'Lax' : 'Strict',
-  path : '/'
+  secure: isProduction,      
+  sameSite: 'Lax',             
+  path: '/',                 
 };
+
 
 exports.getAllUsers = async (req, res, next) => {
   try {

@@ -3,13 +3,13 @@ const { compareIP } = require('../utils/hash');
 const usersSchema = require('../models/users.Schema');
 
 const isProduction = process.env.NODE_ENV === 'production';
+
 const cookieOptions = {
   httpOnly: true,
-  secure: true, 
-  sameSite: isProduction ? 'Lax' : 'Strict',
-  path : '/'
+  secure: isProduction,      
+  sameSite: 'Lax',             
+  path: '/',                 
 };
-
 
 const isAuth = async (req, res, next) => {
   try {
@@ -31,6 +31,7 @@ const isAuth = async (req, res, next) => {
       // Access token انتهت → نجددها
       if (!refreshToken) {
         res.clearCookie('token', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
         return res.status(401).json({ message: "Access token expired" });
       }
 
@@ -66,11 +67,15 @@ const isAuth = async (req, res, next) => {
       const newAccessToken = jwt.createAccessToken(payload);
       res.cookie('token', newAccessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
 
+      // إنشاء refresh token جديد
+      const newRefreshToken = jwt.createRefreshToken(payload);
+      res.cookie('refreshToken', newRefreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+      await usersSchema.findByIdAndUpdate(user.id, { refreshToken: newRefreshToken });
+
       req.user = payload;
       return next();
     }
   } catch (err) {
-    console.error(err);
     next(err);
   }
 };
