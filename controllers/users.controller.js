@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
   httpOnly: true,
   secure: true, 
-  sameSite: 'None',
+  sameSite: 'Lax',
 };
 
 exports.getAllUsers = async (req, res, next) => {
@@ -125,6 +125,7 @@ exports.login = async (req, res, next) => {
 
     res.status(200).json({ message: "User logged in successfully", token: accessToken, user: userData });
   } catch (err) {
+    res.status(200).json({error : err})
     next(err);
   }
 };
